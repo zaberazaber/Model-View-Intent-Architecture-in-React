@@ -29,19 +29,22 @@ If we were to build up a model-view-intent architecture from scratch, we might s
 ```
 let model ={};
 
-The model is a plain JavaScript object. It will contain properties according to the complexity of the view. The more the view can change, the more those possibilities must be represented in the model.
+The model is a plain JavaScript object. It will contain properties according to the complexity
+of the view. The more the view can change, the more those possibilities must be represented in the model.
 ```
 
 ```
 let view = (m) => <.../>;
 
-The view is then a function that takes the model we have made and produces a user interface. In React, this user interface can be represented with JSX.
+The view is then a function that takes the model we have made and produces a user interface. 
+In React, this user interface can be represented with JSX.
 ```
 
 ```
 let update = (m,intent) => m2
 
-The third component, `update`, is the function that controls how intents form the user interface are applied to the model to produce an updated model.
+The third component, `update`, is the function that controls how intents form the user interface
+are applied to the model to produce an updated model.
 ```
 
 
@@ -62,6 +65,34 @@ const model = {
   
 the above code begins with a model object that is intended to encapsulate the entire state of our application. We're building a stopwatch. So to begin with our `model` has two properties. `Running` is a Boolean value that indicates if the stopwatch is running and `time` is the current value of the stopwatch. Next we have our `view function`, which as we've discussed, is a function that can take the model at any moment in time and convert it into a user interface. In this example, I'm using React and JSX to specify the UI. And at the moment, all it does is render a div containing the time value of the timer. And finally, we used `ReactDOM.render` to render the result of passing the model to the view function, because the time in our model object is zero, that's what we see in our user interface. 
 
-The model view intent architecture uses user intents to update the model. And updating the model in turn updates the user interface. So, what are the possible user intents for a stopwatch application? I would define them here in an object. The user may choose to start the timer. The user may choose to stop the timer. The user may choose to reset the timer. There's a tick intent, and this one is not produced by the user, but it's rather produced by the environment. Because a stopwatch is measuring time, we use a timer to generate ticks once every second. This version has a more sophisticated view function. And now what it's trying to do is output the value of the timer in minutes and seconds. So the function firstly has to calculate how many minutes are represented by the time value, which is a value in seconds, and how many seconds remain once you've taken out the minute components, and then the output that's rendered is just updated to include the minutes and seconds values separated by a colon. Because the model now has a time value of 110, when the UI is rendered, it comes out as one minute and 50 seconds. Now I've made the view function just slightly fancier by adding a secondsFormatted options, and this is what's known as a left pad. The secondsFormatted value adds a leading zero to the seconds value if it's less than 10. So that the output is written as 8:01, not just 8:1. The other big change in this version is firstly that we now have a timer firing once every thousand milliseconds, once every second, and this is calling a function called update, passing in the current application state, as well as an intent. If we look at that update function here, the job of the update function is to imply the intent to the model and produce a new model, and how it does that is by having a map of a intents to functions that make some kind of an update to the current model. In this case, if the intent is a tick, then we want to take the current model and increment the time value by one, The final line of the function is simply selecting the correct update function based on the intent and then applying that function to the current model. Back in our timer, the new model is then reassigned to the model identifier and a render function is called, and a render function just wraps the standard ReactDOM. render where we render the output of the view function based on the current model. So now we have a complete working MVI architecture showing the completely life cycle. We start with a default model. We publish intent. An update function applies that intent to make some kind of modification to the model, which then causes the application to be re-rendered through the view function based upon the updated model. Now we want to add some user interact to the example. The view function has changed to include a button, as well as the output of the timer value. It's a single button that's meant to be used as a start button if the timer is not running, and convert to a stop button if the timer is running when the application first starts the timer will read zero. And if a user clicks the start button, we want the timer to begin timing, and we want the start button to convert to a stop button. The way that we do that in React is by using the onClick handler of the button, which is bound to this handler function. The handler function calls the update function, passing in the current model and an intent. The intent that's passed to the update function depends on whether or not the timer is currently running. If the timer is running, then the intent is a stop intent. If the timer is not running, then the intent is a start intent. Now our update function needs to be able to handle those two extra intents. So the tick intent has changed slightly. Now instead of updating the model once every second regardless, we firstly check whether the timer is running. If the timer is running, then every second will add one to the time. If the timer is not running, then every second will add zero to the time. The start intent modifies the application state by setting the running property to true and the stop intent setts the running property to false. Everything else remains unchanged. So now if I click the start button, that publishes the start intent, the update function processes that start intent, changes the running value to true, and then on every tick, the timer is incremented. If I click the stop button, then the stop intent is published, the application is updated setting running to false, and the timer stops being incremented every second. And of course we can restart that timer or re-stop it as much as we like.
+```
+let model = {
+  running: false,
+  time: 0
+  };
+  
+ const view =(model) => {
+ let minutes = Math.floor(model.time /60);
+ let seconds = model.time - (minutes*60);
+ let secondsFormatted = `${seconds <10 ? '0' : ''}${seconds}`
+ return <div>{minutes}:{secondsFormatted</div>;
+ 
+ let intents = {
+ TICK: 'TICK',
+ START: 'START',
+ STOP: 'STOP',
+ RESET: 'RESET'
+ };
+ 
+ ReactDOM.render(view(model),
+  document.getElementById('root')
+  );
+ ```
+
+The model view intent architecture uses user intents to update the model. And updating the model in turn updates the user interface. So, what are the possible user intents for a stopwatch application? I would define them here in an object. The user may choose to start the timer. The user may choose to stop the timer. The user may choose to reset the timer. There's a tick intent, and this one is not produced by the user, but it's rather produced by the environment. Because a stopwatch is measuring time, we use a timer to generate ticks once every second. This version has a more sophisticated view function. And now what it's trying to do is output the value of the timer in minutes and seconds. So the function firstly has to calculate how many minutes are represented by the time value, which is a value in seconds, and how many seconds remain once you've taken out the minute components, and then the output that's rendered is just updated to include the minutes and seconds values separated by a colon. Because the model now has a time value of 110, when the UI is rendered, it comes out as one minute and 50 seconds. 
+
+a secondsFormatted options, and this is what's known as a left pad. The secondsFormatted value adds a leading zero to the seconds value if it's less than 10. So that the output is written as 8:01, not just 8:1. 
+
+The other big change in this version is firstly that we now have a timer firing once every thousand milliseconds, once every second, and this is calling a function called update, passing in the current application state, as well as an intent. If we look at that update function here, the job of the update function is to imply the intent to the model and produce a new model, and how it does that is by having a map of a intents to functions that make some kind of an update to the current model. In this case, if the intent is a tick, then we want to take the current model and increment the time value by one, The final line of the function is simply selecting the correct update function based on the intent and then applying that function to the current model. Back in our timer, the new model is then reassigned to the model identifier and a render function is called, and a render function just wraps the standard ReactDOM. render where we render the output of the view function based on the current model. So now we have a complete working MVI architecture showing the completely life cycle. We start with a default model. We publish intent. An update function applies that intent to make some kind of modification to the model, which then causes the application to be re-rendered through the view function based upon the updated model. Now we want to add some user interact to the example. The view function has changed to include a button, as well as the output of the timer value. It's a single button that's meant to be used as a start button if the timer is not running, and convert to a stop button if the timer is running when the application first starts the timer will read zero. And if a user clicks the start button, we want the timer to begin timing, and we want the start button to convert to a stop button. The way that we do that in React is by using the onClick handler of the button, which is bound to this handler function. The handler function calls the update function, passing in the current model and an intent. The intent that's passed to the update function depends on whether or not the timer is currently running. If the timer is running, then the intent is a stop intent. If the timer is not running, then the intent is a start intent. Now our update function needs to be able to handle those two extra intents. So the tick intent has changed slightly. Now instead of updating the model once every second regardless, we firstly check whether the timer is running. If the timer is running, then every second will add one to the time. If the timer is not running, then every second will add zero to the time. The start intent modifies the application state by setting the running property to true and the stop intent setts the running property to false. Everything else remains unchanged. So now if I click the start button, that publishes the start intent, the update function processes that start intent, changes the running value to true, and then on every tick, the timer is incremented. If I click the stop button, then the stop intent is published, the application is updated setting running to false, and the timer stops being incremented every second. And of course we can restart that timer or re-stop it as much as we like.
 
 A State Container
