@@ -77,7 +77,7 @@ let model = {
  let minutes = Math.floor(model.time /60);
  let seconds = model.time - (minutes*60);
  let secondsFormatted = `${seconds <10 ? '0' : ''}${seconds}`
- return <div>{minutes}:{secondsFormatted</div>;
+ return <div>{minutes}:{secondsFormatted}</div>;
  
  let intents = {
  TICK: 'TICK',
@@ -111,4 +111,61 @@ ReactDOM.render(view(model),
  }, 1000);
  
  ```
-The other big change in this version is firstly that we now have a timer firing once every thousand milliseconds, once every second, and this is calling a function called update, passing in the current application state, as well as an intent. If we look at that `update` function here, the job of the update function is to imply the intent to the model and produce a new model, and how it does that is by having a map of a intents to functions that make some kind of an update to the current model. In this case, if the intent is a `tick`, then we want to take the current model and increment the time value by one, The final line of the function is simply selecting the correct update function based on the intent and then applying that function to the current model. Back in our timer, the new model is then reassigned to the model identifier and a render function is called, and a render function just wraps the standard ReactDOM. render where we render the output of the view function based on the current model. So now we have a complete working MVI architecture showing the completely life cycle. We start with a default model. We publish intent. An update function applies that intent to make some kind of modification to the model, which then causes the application to be re-rendered through the view function based upon the updated model. Now we want to add some user interact to the example. The view function has changed to include a button, as well as the output of the timer value. It's a single button that's meant to be used as a start button if the timer is not running, and convert to a stop button if the timer is running when the application first starts the timer will read zero. And if a user clicks the start button, we want the timer to begin timing, and we want the start button to convert to a stop button. The way that we do that in React is by using the onClick handler of the button, which is bound to this handler function. The handler function calls the update function, passing in the current model and an intent. The intent that's passed to the update function depends on whether or not the timer is currently running. If the timer is running, then the intent is a stop intent. If the timer is not running, then the intent is a start intent. Now our update function needs to be able to handle those two extra intents. So the tick intent has changed slightly. Now instead of updating the model once every second regardless, we firstly check whether the timer is running. If the timer is running, then every second will add one to the time. If the timer is not running, then every second will add zero to the time. The start intent modifies the application state by setting the running property to true and the stop intent setts the running property to false. Everything else remains unchanged. So now if I click the start button, that publishes the start intent, the update function processes that start intent, changes the running value to true, and then on every tick, the timer is incremented. If I click the stop button, then the stop intent is published, the application is updated setting running to false, and the timer stops being incremented every second. And of course we can restart that timer or re-stop it as much as we like.
+The other big change in this version is firstly that we now have a timer firing once every thousand milliseconds, once every second, and this is calling a function called `update`, passing in the current application `state`, as well as an `intent`. shown below:
+```
+ model = update(model, 'TICK');
+ ```
+ 
+ If we look at that `update` function used in the above line, the job of the `update` function is to imply the intent to the model and produce a new model, and how it does that is by having a `map of a intents to functions` that make some kind of an update to the current model. In this case, if the intent is a `tick`, then we want to take the current model and increment the time value by `one`, The final line of the function is simply selecting the correct update function based on the intent and then applying that function to the current model `return updates[intent](model);`.
+ 
+ ```
+ const update = (model,intent) => {
+    const updates = {
+        'START': (model) => Object.assign(model, { running: true }),
+        'STOP': (model) => Object.assign(model, { running: false }),
+        'TICK': (model) => Object.assign(model, { time: model.time + (model.running ? 1 : 0 )})
+    };
+    return updates[intent](model);
+}
+```
+ 
+ 
+ Back in our timer, the new model is then reassigned to the model identifier `model = update(model, 'TICK');` and a render function ` render();` is called, and a render function just wraps the standard ReactDOM. render where we render the output of the view function based on the current model `ReactDOM.render(view(model),` .  
+ 
+ 
+So, now we have a complete working MVI architecture showing the completely life cycle. We start with a default model. We publish intent. An update function applies that intent to make some kind of modification to the model, which then causes the application to be re-rendered through the view function based upon the updated model.
+
+
+Now we want to add some user interact to the example. The view function has changed to include a button, as well as the output of the timer value. It's a single button that's meant to be used as a start button if the timer is not running, and convert to a stop button if the timer is running when the application first starts the timer will read zero. And if a user clicks the start button, we want the timer to begin timing, and we want the start button to convert to a stop button. The way that we do that in React is by using the onClick handler of the button,
+
+```
+   <button onClick={handler} > {model.running ? 'Stop' : 'Start'}</button>
+```
+
+which is bound to this handler function. The handler function calls the update function, passing in the current model and an intent.
+
+```
+ let handler = (event) => {
+        model = update(model, model.running ? 'STOP' : 'START');
+    };
+```
+
+The intent that's passed to the update function depends on whether or not the timer is currently running. If the timer is running, then the intent is a stop intent. If the timer is not running, then the intent is a start intent. Now our update function needs to be able to handle those two extra intents. So the tick intent has changed slightly. Now instead of updating the model once every second regardless, we firstly check whether the timer is running. If the timer is running, then every second will add one to the time. If the timer is not running, then every second will add zero to the time.
+The `start` intent modifies the application state by setting the running property to `true` and the `stop` intent setts the running property to `false`.
+
+```
+const update = (model,intent) => {
+    console.log(model,intent)
+    const updates = {
+        'START': (model) => Object.assign(model, { running: true }),
+        'STOP': (model) => Object.assign(model, { running: false }),
+        'TICK': (model) => Object.assign(model, { time: model.time + (model.running ? 1 : 0 )})
+    };
+    return updates[intent](model);
+}
+```
+
+Everything else remains unchanged. So now if I click the start button, that publishes the start intent, the update function processes that start intent, changes the running value to true, and then on every tick, the timer is incremented. If I click the stop button, then the stop intent is published, the application is updated setting running to false, and the timer stops being incremented every second. 
+
+
+
