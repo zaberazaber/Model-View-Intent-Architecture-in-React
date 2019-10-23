@@ -1,6 +1,7 @@
 # State Container In React
 ```
-A `state container` is a component that takes care of holding the model and controlling updates through the model.
+A `state container` is a component that takes care of holding the model and controlling updates through 
+the model.
 ```
 
 The custom state container will implement three methods. 
@@ -104,5 +105,26 @@ Now that we have that collection of handlers, when an intent is dispatched, afte
 ```
   handlers.forEach( h => { h () ; } )
 ```
+
+# Cloning and Running the Application in local
+`Clone` the project into local
+
+`Install` all the `npm packages`. Go into the project folder and type the following command to `install` all `npm packages`
+
+```
+npm install                                                                    
+```
+
+In order to run the application Type the following command
+
+```
+npm start  
+```
+
+The Application Runs on localhost:3000
+
+:+1: happy coding :computer:
+
+
 
 
