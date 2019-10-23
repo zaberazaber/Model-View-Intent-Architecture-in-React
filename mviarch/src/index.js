@@ -47,16 +47,20 @@ let view = (m) => {
     </div>;
 }
 
-
 const render = () => {
+    // ReactDOM.render(model),
     ReactDOM.render(view(container.getState()),
         document.getElementById('root')
     );
 };
+// render();
 container.subscribe(render);
 
 setInterval(() => {
+    // model = update(model, 'TICK');
     container.dispatch('TICK');
+    // render();
 }, 1000);
 
 serviceWorker.unregister();
+
