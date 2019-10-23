@@ -5,57 +5,53 @@ import './index.css';
 import * as serviceWorker from './serviceWorker';
 
 
-let model = {
-    running: false,
-    time: 0
-};
-
-// let intents = {
-//     TICK: 'TICK',
-//     START: 'START',
-//     STOP: 'STOP',
-//     RESET: 'RESET'
-// };
- 
-const View = (model) => {
-    let minutes = Math.floor(model.time / 60);
-    // console.log('minutes', minutes);
-    let seconds = model.time - (minutes * 60);
-    // console.log('time',model.time)
-    let secondsFormatted = `${seconds < 10 ? '0' : ' '}${seconds}`
-    let handler = (event) => {
-        model = update(model, model.running ? 'STOP' : 'START');
+const createStore = (reducer) => {
+    let internalState;
+    let handlers = [];
+    return {
+      dispatch: (action) => {
+        internalState = reducer(internalState, action);
+        handlers.forEach(h => { h(); });
+      },
+      subscribe: (handler) => { 
+        handlers.push(handler);
+      },
+      getState: () => internalState
     };
-     
-    return <div>
-        <p>{minutes}:{secondsFormatted}</p>
-        <button onClick={handler} > {model.running ? 'Stop' : 'Start'}</button>
-    </div>;
-}
-
-const update = (model,intent) => {
-    console.log(model,intent)
+  };
+  
+  let container = createStore((model = { running: false, time: 0 }, intent) => {
     const updates = {
-        'START': (model) => Object.assign(model, { running: true }),
-        'STOP': (model) => Object.assign(model, { running: false }),
-        'TICK': (model) => Object.assign(model, { time: model.time + (model.running ? 1 : 0 )})
+      'START': (model) => Object.assign(model, {running: true}),
+      'STOP': (model) => Object.assign(model, {running: false}),
+      'TICK': (model) => Object.assign(model, {time: model.time + (model.running ? 1 : 0)})
     };
-    return updates[intent](model);
-}
-
-
-const render =( ) => {
-ReactDOM.render(View(model),
-    document.getElementById('root')
-);
-};
-render();
-
-setInterval( () => {
-    model = update(model, 'TICK');
-    render();
-   }, 1000);
-
-
+    return (updates[intent] || (() => model))(model);
+  });
+  
+  let view = (m) => {
+    let minutes = Math.floor(m.time / 60);
+    let seconds = m.time - (minutes * 60);
+    let secondsFormatted =  `${seconds < 10 ? '0' : ''}${seconds}`;
+    let handler = (event) => {
+      container.dispatch(m.running ? 'STOP' : 'START');
+    };
+    
+    return <div>
+      <p>{minutes}:{secondsFormatted}</p>
+      <button onClick={handler}>{m.running ? 'Stop' : 'Start'}</button>
+    </div>;
+  };
+  
+  const render = () => {
+    ReactDOM.render(view(container.getState()),
+      document.getElementById('root')
+    );
+  };
+  container.subscribe(render);
+  
+  setInterval(() => {
+    container.dispatch('TICK');
+  }, 1000);
 
 serviceWorker.unregister();
